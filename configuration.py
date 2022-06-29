@@ -3,7 +3,7 @@ RANDOM_MODE = True
 # only if RANDOM_MODE == FALSE
 WIDTH = 100
 HEIGHT = 150
-NUM_OF_CITIES = 6
+NUM_OF_CITIES = 6 # MAX: 65535
 # ----------------------------
 
 CITIES_FILEPATH = r'data/p1.txt'
@@ -14,3 +14,4 @@ MAX_ITER = 10  # liczba iteracji bez poprawy rozwiązania po których algorytm s
 
 PARENTS_RATIO = 0.2
 INCLUDE_PARENTS = True
+
