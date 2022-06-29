@@ -3,7 +3,7 @@ RANDOM_MODE = True
 # only if RANDOM_MODE == FALSE
 WIDTH = 100
 HEIGHT = 150
-NUM_OF_CITIES = 50
+NUM_OF_CITIES = 6
 # ----------------------------
 
 CITIES_FILEPATH = r'data/p1.txt'

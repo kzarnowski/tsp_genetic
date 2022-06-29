@@ -16,12 +16,31 @@ def generate_cities():
     return cities
 
 
+def init_population():
+    rng = np.random.default_rng(1234)
+    x = np.arange(N)
+    perms = rng.permuted(np.tile(x, CONFIG.POPULATION_SIZE).reshape(CONFIG.POPULATION_SIZE, x.size), axis=1)
+    return perms
+
+
+def eval_population(pop):
+    scores = np.empty(N)
+    rows = pop[:, :-1]
+    cols = pop[:, 1:]
+    for i in range(N):
+        scores[i] = np.sum(dist[rows[i], cols[i]])
+    return scores
+
+
 if __name__ == '__main__':
     cities = generate_cities()
     N = cities.shape[0]
     dist = distance_matrix(cities, cities)
+    population = init_population()
 
+    scores = eval_population(population)
 
-    for i in range(N-1):
-        plt.plot(cities[i:i+2, 0], cities[i:i+2, 1], 'ro-')
-    plt.show()
+    print(scores)
+    # for i in range(N-1):
+    #     plt.plot(cities[i:i+2, 0], cities[i:i+2, 1], 'ro-')
+    # plt.show()
