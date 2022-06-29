@@ -8,6 +8,9 @@ NUM_OF_CITIES = 6
 
 CITIES_FILEPATH = r'data/p1.txt'
 
-POPULATION_SIZE = 1000
+POPULATION_SIZE = 10
 MUTATION_PROBABILITY = 0.3
 MAX_ITER = 10  # liczba iteracji bez poprawy rozwiązania po których algorytm się zatrzyma
+
+PARENTS_RATIO = 0.2
+INCLUDE_PARENTS = True
