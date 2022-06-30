@@ -1,9 +1,11 @@
 import unittest
+from unittest import mock
+
 import numpy as np
 
 import main
 import configuration as CONFIG
-
+import random
 
 class TestGeneticOperations(unittest.TestCase):
     def test_sample_population(self):
@@ -53,4 +55,3 @@ class TestGeneticOperations(unittest.TestCase):
 
         correct_order = np.array_equal(scores_idx, prob_idx_desc)
         self.assertTrue(correct_order)
-
