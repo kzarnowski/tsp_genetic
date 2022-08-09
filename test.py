@@ -3,15 +3,15 @@ from unittest import mock
 
 import numpy as np
 
-import main
+import genetic_algorithm
 import configuration as CONFIG
 import random
 
 class TestGeneticOperations(unittest.TestCase):
     def test_sample_population(self):
         CONFIG.POPULATION_SIZE = 9
-        main.N = 3
-        main.dist = np.array([
+        genetic_algorithm.N = 3
+        genetic_algorithm.dist = np.array([
             [0, 20, 30],
             [20, 0, 60],
             [30, 60, 0]
@@ -28,7 +28,7 @@ class TestGeneticOperations(unittest.TestCase):
             [2, 0, 1]
         ])
 
-        result = main.eval_population(pop)
+        result = genetic_algorithm.eval_population(pop)
         self.assertTrue(np.allclose(result, np.array([80, 50, 50, 80, 50, 50, 80, 50, 50])))
 
     def test_calculate_prob(self):
@@ -44,12 +44,12 @@ class TestGeneticOperations(unittest.TestCase):
         a = np.random.rand(N, N)
         random_dist = np.tril(a) + np.tril(a, -1).T
         random_dist[np.diag_indices(N, ndim=2)] = 0
-        main.dist = random_dist
+        genetic_algorithm.dist = random_dist
 
-        scores = main.eval_population(random_pop)
+        scores = genetic_algorithm.eval_population(random_pop)
         scores_idx = np.argsort(scores, kind='stable')
 
-        prob = main.calculate_prob(scores)
+        prob = genetic_algorithm.calculate_prob(scores)
         prob_idx = np.argsort(prob, kind='stable')
         prob_idx_desc = prob_idx[::-1]
 

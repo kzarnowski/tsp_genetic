@@ -3,9 +3,12 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance_matrix
 from random import random
 
-
 import configuration as CONFIG
 
+# TODO: temporary
+iters_without_change = None
+best_idx = None
+best_score = None
 
 def generate_cities():
     if CONFIG.RANDOM_MODE:
@@ -18,14 +21,14 @@ def generate_cities():
     return cities
 
 
-def init_population():
+def init_population(N):
     rng = np.random.default_rng()
     x = np.arange(N, dtype=np.uint16)
     perms = rng.permuted(np.tile(x, CONFIG.POPULATION_SIZE).reshape(CONFIG.POPULATION_SIZE, x.size), axis=1)
     return perms
 
 
-def eval_population(pop):
+def eval_population(pop, dist):
     scores = np.empty(CONFIG.POPULATION_SIZE)
     rows = pop[:, :-1]
     cols = pop[:, 1:]
@@ -150,7 +153,6 @@ def next_generation(parents, offspring):
     else:
         return offspring
 
-
 def stop_condition(scores):
     global iters_without_change
     global best_idx
@@ -168,14 +170,17 @@ def stop_condition(scores):
         iters_without_change += 1
         return iters_without_change == CONFIG.MAX_ITER
 
-
-if __name__ == '__main__':
+def run_algorithm():
+    global iters_without_change
+    global best_idx
+    global best_score
+    
     cities = generate_cities()
     N = cities.shape[0]
     dist = distance_matrix(cities, cities)
 
-    population = init_population()
-    scores = eval_population(population)
+    population = init_population(N)
+    scores = eval_population(population, dist)
 
     iters_without_change = 0
     best_idx = np.argmin(scores)
@@ -194,8 +199,4 @@ if __name__ == '__main__':
         offspring = mutate(offspring)
 
         population = next_generation(parents, offspring)
-        scores = eval_population(population)
-
-
-
-
+        scores = eval_population(population, dist)
