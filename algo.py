@@ -3,37 +3,37 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance_matrix
 
 import configuration as config
+from utils import random_pair
+from time import perf_counter
 
 class GeneticAlgorithm():
     def __init__(self, config):
         self.config = config
         self.iters_without_change = 0
         self.best_idx = None
-        self.best_score = None
         self.cities = None
+
+        self.is_stopped = True
+        self.stats = dict.fromkeys(
+            ["solution", "best_score", "avg_score", "generation_num"],
+            None
+        )
 
     def set_cities(self, cities):
         self.cities = cities
 
-    def run_algorithm(self):
-        print("START")
-        cities = self._generate_cities()
-        N = cities.shape[0]
-        dist = distance_matrix(cities, cities)
+    def run_algorithm(self, progress_callback):
+        N = self.cities.shape[0]
+        dist = distance_matrix(self.cities, self.cities)
 
         population = self._init_population(N)
         scores = self._eval_population(population, dist)
 
         self.iters_without_change = 0
         self.best_idx = np.argmin(scores)
-        self.best_score = scores[self.best_idx]
-
-        gen = 0
+        self.stats['best_score'] = scores[self.best_idx]
+        self.stats['generation_num'] = 0
         while not self._stop_condition(scores):
-            if gen % 10 == 0:
-                print(f"GEN: {gen} BEST: {self.best_score} SOLUTION: {population[self.best_idx]} ALL: {np.sum(scores)}")
-            gen += 1
-
             parents = self._select_parents(population, scores)
             pairs = self._generate_pairs(parents)
             offspring = self._procreate(parents, pairs)
@@ -42,17 +42,12 @@ class GeneticAlgorithm():
 
             population = self._next_generation(parents, offspring)
             scores = self._eval_population(population, dist)
-    
-    def _generate_cities(self):
-        if config.RANDOM_MODE:
-            x = np.random.uniform(0, config.WIDTH, config.NUM_OF_CITIES)
-            y = np.random.uniform(0, config.HEIGHT, config.NUM_OF_CITIES)
-            cities = np.column_stack((x, y))
-        else:
-            cities = np.loadtxt(config.CITIES_FILEPATH)
-            #TODO: check file structure
-        return cities
 
+            self.stats['generation_num'] += 1
+            self.stats['avg_score'] = np.mean(scores)
+            self.stats['solution'] = population[self.best_idx]
+            progress_callback.emit(self.stats)
+    
     def _init_population(self, N):
         rng = np.random.default_rng()
         x = np.arange(N, dtype=np.uint16)
@@ -93,13 +88,6 @@ class GeneticAlgorithm():
 
         return parents
 
-    @staticmethod
-    def random_pair(max_value):
-        rng = np.random.default_rng()
-        idx = rng.choice(max_value, 2, replace=False)
-        return idx[0], idx[1]
-
-
     def _generate_pairs(self, parents):
         if config.INCLUDE_PARENTS:
             offspring_size = config.POPULATION_SIZE - parents.shape[0]
@@ -110,14 +98,15 @@ class GeneticAlgorithm():
 
         # TODO: remove loop
         for i in range(pairs.shape[0]):
-            pairs[i, :] = self.random_pair(parents.shape[0])
+            pairs[i, :] = random_pair(parents.shape[0])
 
         return pairs
 
 
     def _crossover(self, p1, p2):
-        end = config.NUM_OF_CITIES - 1
-        u, v = self.random_pair(end)
+        end = self.cities.shape[0] - 1
+        
+        u, v = random_pair(end)
 
         if v < u:
             u, v = v, u
@@ -125,8 +114,8 @@ class GeneticAlgorithm():
             v = min(v + 1, end)
             u = max(u - 1, 0)
 
-        o1 = np.zeros(config.NUM_OF_CITIES, dtype=np.uint16)
-        o2 = np.zeros(config.NUM_OF_CITIES, dtype=np.uint16)
+        o1 = np.zeros(self.cities.shape[0], dtype=np.uint16)
+        o2 = np.zeros(self.cities.shape[0], dtype=np.uint16)
 
         o1[u:v+1] = p1[u:v+1]
         o2[u:v+1] = p2[u:v+1]
@@ -150,7 +139,7 @@ class GeneticAlgorithm():
 
     def _mutate(self, pop):
         def mutate_individual(x):
-            u, v = self.random_pair(x.shape[0])
+            u, v = random_pair(x.shape[0])
             x[u], x[v] = x[v], x[u]
             return x
 
@@ -186,11 +175,14 @@ class GeneticAlgorithm():
             return offspring
 
     def _stop_condition(self, scores):
+        if self.is_stopped:
+            return True
+
         curr_best_idx = np.argmin(scores)
         curr_best_score = scores[curr_best_idx]
 
-        if curr_best_score < self.best_score:
-            self.best_score = curr_best_score
+        if curr_best_score < self.stats['best_score']:
+            self.stats['best_score'] = curr_best_score
             self.best_idx = curr_best_idx
             self.iters_without_change = 0
             return False

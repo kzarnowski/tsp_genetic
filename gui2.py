@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (QFileDialog, QInputDialog, QWidget, QMainWindow, QHBoxLayout, 
-    QVBoxLayout, QApplication, QLabel, QPushButton, QLineEdit, QSlider, QCheckBox)
-from PyQt5.QtCore import QSize, Qt, QPointF
+    QVBoxLayout, QApplication, QLabel, QPushButton, QLineEdit, QSlider, QCheckBox, QMessageBox)
+from PyQt5.QtCore import QSize, Qt, QPointF, QThreadPool
 from PyQt5.QtGui import QPalette, QColor, QPainter, QPixmap, QPen
 
 from utils import flt2per
@@ -40,8 +40,8 @@ class MainWindow(QMainWindow):
         self.settings = QVBoxLayout()
         self.sidebar.addLayout(self.settings, 3)
 
-        self.stats = QLabel("Stats")
-        self.sidebar.addWidget(self.stats, 7)
+        self.stats = QVBoxLayout()
+        self.sidebar.addLayout(self.stats, 7)
 
 
         # LOADING DATA
@@ -124,8 +124,21 @@ class MainWindow(QMainWindow):
 
         # START/STOP BUTTON
         self.start_stop_button = QPushButton()
-        self.start_stop_button.setText("Start")
+        self.start_stop_button.setText("START")
         self.settings.addWidget(self.start_stop_button)
+
+        # STATS
+        self.stats_label = QLabel("Statystyki (kliknij start aby zobaczyć)")
+        self.stats.addWidget(self.stats_label)
+        self.generation_num = QLabel()
+        self.stats.addWidget(self.generation_num)
+        # self.execution_time = QLabel()
+        # self.stats.addWidget(self.execution_time)
+        self.best_score = QLabel()
+        self.stats.addWidget(self.best_score)
+        self.avg_score = QLabel()
+        self.stats.addWidget(self.avg_score)
+
 
     def display_file_dialog(self):
         dialog = QFileDialog()
@@ -186,6 +199,18 @@ class MainWindow(QMainWindow):
         for i in range(self.px.size):
                 painter.drawPoint(self.px[i], self.py[i])
         painter.end()
+    
+    def display_no_cities_message(self):
+        box = QMessageBox()
+        box.setIcon(QMessageBox.Warning)
+        box.setText("Załaduj dane przed uruchomieniem algorytmu.")
+        box.exec()
+
+    def update_stats(self, stats):
+        self.stats_label.setText("Statystyki")
+        self.generation_num.setText(f"Pokolenie: {stats['generation_num']}")
+        self.best_score.setText(f"Najlepszy wynik: {stats['best_score']}")
+        self.avg_score.setText(f"Średni wynik: {stats['avg_score']}")
 
 
 if __name__ == "__main__":

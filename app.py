@@ -2,6 +2,9 @@ import numpy as np
 from algo import GeneticAlgorithm
 from config import Config
 from utils import per2flt
+from workers import Worker
+
+from PyQt5.QtCore import QThreadPool
 
 class App():
     def __init__(self, ui):
@@ -10,6 +13,7 @@ class App():
         self.ui.app = self
         self.ui.setup_default_config(self.config)
         self.ga = GeneticAlgorithm(self.config)
+        self.threadpool = QThreadPool()
 
     def set_cities_random(self, num_of_cities):
         x = np.random.uniform(0, 100, num_of_cities)
@@ -37,8 +41,30 @@ class App():
         params["include_parents"] = self.ui.include_parents_checkbox.isChecked()
         self.config.update(params)
 
-        #print(self.config)
-
     def start_stop_clicked(self):
-        self.update_config()
-        self.ga.run_algorithm()
+        if self.ui.px is None or self.ui.py is None:
+            self.ui.display_no_cities_message()
+            return
+
+        if self.ga.is_stopped:
+            self.update_config()
+            self.worker = Worker(self.ga.run_algorithm)
+            self.worker.signals.result.connect(self.result)
+            self.worker.signals.finished.connect(self.complete)
+            self.worker.signals.progress.connect(self.progress)
+            self.ga.is_stopped = False
+            self.ui.start_stop_button.setText("STOP")
+            self.threadpool.start(self.worker)
+        else:
+            self.ga.is_stopped = True
+            self.ui.start_stop_button.setText("START")
+    
+    def progress(self, stats):
+        self.ui.update_stats(stats)
+    
+    def result(self, s):
+        print(s)
+
+    def complete(self):
+        print("THREAD COMPLETE!")
+        
