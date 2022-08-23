@@ -16,12 +16,14 @@ class App():
         y = np.random.uniform(0, 100, num_of_cities)
         cities = np.column_stack((x, y))
         self.ga.set_cities(cities)
+        self.ui.draw_cities(cities)
         print(num_of_cities)
 
     def set_cities_from_txt(self, path):
         cities = np.loadtxt(path)
         #TODO: check file structure
         self.ga.set_cities(cities)
+        self.ui.draw_cities(cities)
         print(f"Cities set from: {path}")
 
     def run_ga(self):

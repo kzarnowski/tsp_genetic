@@ -1,18 +1,25 @@
 from PyQt5.QtWidgets import (QFileDialog, QInputDialog, QWidget, QMainWindow, QHBoxLayout, 
     QVBoxLayout, QApplication, QLabel, QPushButton, QLineEdit, QSlider, QCheckBox)
-from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtCore import QSize, Qt, QPointF
 from PyQt5.QtGui import QPalette, QColor, QPainter, QPixmap, QPen
 
 from utils import flt2per
+import numpy as np
 
 import sys
+
+CANVAS_SIZE = (700, 700)
+WINDOW_SIZE = (1020, 720)
 
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
 
         self.app = None
-        self.setFixedSize(QSize(1020, 720))
+        self.px = None
+        self.py = None
+
+        self.setFixedSize(QSize(*WINDOW_SIZE))
         self.setWindowTitle("Travelling Salesman Problem - Genetic Algorithm")
 
         self.container = QWidget()
@@ -20,10 +27,11 @@ class MainWindow(QMainWindow):
         self.container.setLayout(self.layout)
         self.setCentralWidget(self.container)
 
+        self.pixmap = QPixmap(*CANVAS_SIZE)
+        self.pixmap.fill(QColor("white"))
         self.canvas = QLabel()
-        self.canvas.setPixmap(QPixmap(700, 700))
+        self.canvas.setPixmap(self.pixmap)
         self.layout.addWidget(self.canvas, 10)
-        
 
         self.sidebar = QVBoxLayout()
         self.layout.addLayout(self.sidebar, 4)
@@ -119,18 +127,6 @@ class MainWindow(QMainWindow):
         self.start_stop_button.setText("Start")
         self.settings.addWidget(self.start_stop_button)
 
-        # DRAWING TEST
-        self.draw()
-
-    def draw(self):
-        painter = QPainter(self.canvas.pixmap())
-        pen = QPen()
-        pen.setWidth(3)
-        pen.setColor(QColor("red"))
-        painter.setPen(pen)
-        painter.drawLine(0, 0, 700, 700)
-        painter.end()
-
     def display_file_dialog(self):
         dialog = QFileDialog()
         dialog.setFileMode(QFileDialog.ExistingFile)
@@ -160,6 +156,36 @@ class MainWindow(QMainWindow):
         self.parents_ratio_slider.setValue(flt2per(config.parents_ratio))
         self.population_size_input.setText(str(config.population_size))
         self.start_stop_button.clicked.connect(self.app.start_stop_clicked)
+
+    def draw_cities(self, cities):
+        painter = QPainter(self.canvas.pixmap())
+        pen = QPen()
+        pen.setWidth(5)
+        painter.setPen(pen)
+    
+        # CLEAR OLD POINTS
+        if self.px is not None or self.py is not None:
+            pen.setColor(QColor("white"))
+            painter.setPen(pen)
+            for i in range(self.px.size):
+                painter.drawPoint(self.px[i], self.py[i])
+
+        x = cities[:, 0]
+        y = cities[:, 1]
+
+        x = CANVAS_SIZE[0] * (x - np.min(x)) / (np.max(x) - np.min(x))
+        y = CANVAS_SIZE[1] * (y - np.min(y)) / (np.max(y) - np.min(y))
+        margin = 20 #px
+        scale_x = (CANVAS_SIZE[0] - 2 * margin) / (np.max(x) - np.min(x))
+        scale_y = (CANVAS_SIZE[1] - 2 * margin) / (np.max(y) - np.min(y))
+        self.px = scale_x * x + margin - np.min(x) * scale_x
+        self.py = scale_y * y + margin - np.min(y) * scale_y
+
+        pen.setColor(QColor("red")) 
+        painter.setPen(pen) 
+        for i in range(self.px.size):
+                painter.drawPoint(self.px[i], self.py[i])
+        painter.end()
 
 
 if __name__ == "__main__":
