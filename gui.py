@@ -1,14 +1,31 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QFileDialog, QInputDialog, QWidget
+from PyQt5.QtGui import QPainter
 from algo import GeneticAlgorithm
 from config import Config
 from utils import flt2per
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        
+        self.app = None
+        
+
+    def paintEvent(self, event):
+        print("PAINT EVENT!")
+        painter = QPainter(self)
+        painter.begin(self)
+        painter.setPen(Qt.red)
+        painter.setViewport(20, 20, 500, 500)
+        painter.drawRect(0, 0, 100, 100)
+        painter.end()
+
     def setupUi(self, MainWindow):
         # Basic setup
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1131, 812)
+        MainWindow.resize(1280, 720)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         MainWindow.setCentralWidget(self.centralwidget)
@@ -22,6 +39,8 @@ class Ui_MainWindow(object):
         self.generate_random_button = QtWidgets.QPushButton(self.centralwidget)
         self.generate_random_button.setGeometry(QtCore.QRect(990, 70, 141, 41))
         self.generate_random_button.setObjectName("generate_random_button")
+        self.generate_random_button.clicked.connect(self.display_cities_count_dialog)
+
         self.data_label = QtWidgets.QLabel(self.centralwidget)
         self.data_label.setGeometry(QtCore.QRect(970, 40, 60, 16))
         self.data_label.setObjectName("data_label")
@@ -40,6 +59,8 @@ class Ui_MainWindow(object):
         
         self.setup_parents_ratio()
         self.setup_mutation_prob()
+
+        #self.setup_painter()
 
         # Controlling execution
         self.start_stop_button = QtWidgets.QPushButton(self.centralwidget)
@@ -78,7 +99,20 @@ class Ui_MainWindow(object):
 
         if dialog.exec_():
             filenames = dialog.selectedFiles()
-            print(filenames[0])
+            if len(filenames) != 1:
+                pass #TODO: not one file exception
+    
+            self.app.set_cities_from_txt(filenames[0])   
+
+    def display_cities_count_dialog(self):
+        num_of_cities, ok = QInputDialog.getInt(
+            None,
+            "Random mode: number of cities",
+            "Enter a number of cities"
+        )
+
+        if ok:
+            self.app.set_cities_random(num_of_cities)
 
     def setup_mutation_prob(self):
         self.mutation_prob_label = QtWidgets.QLabel(self.centralwidget)
@@ -130,6 +164,8 @@ class Ui_MainWindow(object):
         self.parents_ratio_display.setText(f"{config.parents_ratio} %") 
         self.parents_ratio_slider.setValue(flt2per(config.parents_ratio))
         self.population_size_input.setText(str(config.population_size))
+
+        self.start_stop_button.clicked.connect(self.app.start_stop_clicked)
     
     def setup_population_size(self):
         self.population_size_input = QtWidgets.QLineEdit(self.centralwidget)
@@ -139,4 +175,25 @@ class Ui_MainWindow(object):
         self.population_size_label = QtWidgets.QLabel(self.centralwidget)
         self.population_size_label.setGeometry(QtCore.QRect(860, 170, 91, 20))
         self.population_size_label.setObjectName("pop_size_label")
+    
+    def setup_painter(self):
+        painter = QPainter()
+        painter.begin(self.centralwidget)
+        painter.setPen(Qt.red)
+        painter.setViewport(20, 20, 500, 500)
+        painter.drawRect(0, 0, 100, 100)
+        painter.end()
 
+
+class Area(QWidget):
+    def __init__(self):
+        super().__init__()
+
+    def paintEvent(self, event):
+        print("PAINT EVENT!")
+        painter = QPainter()
+        painter.begin(self)
+        painter.setPen(Qt.red)
+        painter.setViewport(20, 20, 500, 500)
+        painter.drawRect(0, 0, 100, 100)
+        painter.end()

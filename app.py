@@ -7,19 +7,22 @@ class App():
     def __init__(self, ui):
         self.ui = ui
         self.config = Config()
+        self.ui.app = self
         self.ui.setup_default_config(self.config)
         self.ga = GeneticAlgorithm(self.config)
-        self.setup_actions()
 
-    def get_cities_random(num_of_cities):
+    def set_cities_random(self, num_of_cities):
         x = np.random.uniform(0, 100, num_of_cities)
         y = np.random.uniform(0, 100, num_of_cities)
-        return np.column_stack((x, y))
+        cities = np.column_stack((x, y))
+        self.ga.set_cities(cities)
+        print(num_of_cities)
 
-    def get_cities_from_txt(path):
+    def set_cities_from_txt(self, path):
         cities = np.loadtxt(path)
         #TODO: check file structure
-        return cities
+        self.ga.set_cities(cities)
+        print(f"Cities set from: {path}")
 
     def run_ga(self):
         self.ga.run_algorithm()
@@ -32,10 +35,7 @@ class App():
         params["include_parents"] = self.ui.include_parents_checkbox.isChecked()
         self.config.update(params)
 
-        print(self.config)
-
-    def setup_actions(self):
-        self.ui.start_stop_button.clicked.connect(self.start_stop_clicked)
+        #print(self.config)
 
     def start_stop_clicked(self):
         self.update_config()

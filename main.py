@@ -1,18 +1,16 @@
 import algo as algo
-from gui import Ui_MainWindow
-import numpy as np
+from gui2 import MainWindow
 import sys
-from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QApplication
 from app import App
 
 if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    
-    MainApplication = App(ui)
-    MainWindow.show()
+
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    MainApplication = App(window)
+    window.show()
+
     sys.exit(app.exec_())
 
     

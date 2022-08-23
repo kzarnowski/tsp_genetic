@@ -10,6 +10,7 @@ class Config():
         self.mutation_prob = mutation_prob
         self.parents_ratio = parents_ratio
         self.include_parents = include_parents
+        self.filepath = None
 
     def update(self, params):
         for param_name, param_value in params.items():
