@@ -1,6 +1,7 @@
 from re import S
 from PyQt5.QtWidgets import (QFileDialog, QInputDialog, QWidget, QMainWindow, QHBoxLayout, 
-    QVBoxLayout, QApplication, QLabel, QPushButton, QLineEdit, QSlider, QCheckBox, QMessageBox)
+    QVBoxLayout, QApplication, QLabel, QPushButton, QLineEdit, QSlider, QCheckBox, QMessageBox,
+    QProgressBar)
 from PyQt5.QtCore import QSize, Qt, QPointF, QThreadPool
 from PyQt5.QtGui import QPalette, QColor, QPainter, QPixmap, QPen
 
@@ -119,6 +120,31 @@ class MainWindow(QMainWindow):
         self.mutation_prob_layout.addWidget(self.mutation_prob_slider, 19)
         self.mutation_prob_layout.addWidget(self.mutation_prob_display, 1)
 
+        # MAX ITERS WITHOUT CHANGE
+        self.max_iter_label = QLabel("Dociekliwość")
+        self.max_iter_layout = QHBoxLayout()
+        self.max_iter_layout.setAlignment(Qt.AlignJustify | Qt.AlignVCenter)
+        self.max_iter_slider = QSlider()
+        self.max_iter_slider.setMinimum(30)
+        self.max_iter_slider.setMaximum(300)
+        self.max_iter_slider.setOrientation(Qt.Horizontal)
+        self.max_iter_display = QLabel()
+        self.max_iter_slider.valueChanged.connect(lambda: {
+            self.max_iter_display.setText(
+                "Bardzo niska" if self.max_iter_slider.value() < 60 else
+                "Niska" if self.max_iter_slider.value() < 120 else
+                "Średnia" if self.max_iter_slider.value() < 180 else
+                "Wysoka" if self.max_iter_slider.value() < 240 else
+                "Bardzo wysoka"
+            )
+        })
+
+        self.settings.addWidget(self.max_iter_label)
+        self.settings.addLayout(self.max_iter_layout)
+        self.max_iter_layout.addWidget(self.max_iter_slider, 2)
+        self.max_iter_layout.addWidget(self.max_iter_display, 1)
+
+
         # INCLUDE PARENTS
         self.include_parents_checkbox = QCheckBox()
         self.include_parents_checkbox.setChecked(True)
@@ -135,12 +161,35 @@ class MainWindow(QMainWindow):
         self.stats.addWidget(self.stats_label)
         self.generation_num = QLabel()
         self.stats.addWidget(self.generation_num)
-        # self.execution_time = QLabel()
-        # self.stats.addWidget(self.execution_time)
         self.top_score = QLabel()
         self.stats.addWidget(self.top_score)
         self.avg_score = QLabel()
         self.stats.addWidget(self.avg_score)
+
+        self.progressbar = QProgressBar()
+        self.progressbar.setTextVisible(False)
+        self.style_progressbar()
+        self.stats.addWidget(self.progressbar)
+
+        # HELPERS
+        self.settings_widgets = [
+            self.data_label,
+            self.load_data_button,
+            self.generate_random_button,
+            self.configuration_label,
+            self.population_size_input,
+            self.population_size_label,
+            self.parents_ratio_label,
+            self.parents_ratio_display,
+            self.parents_ratio_slider,
+            self.mutation_prob_slider,
+            self.mutation_prob_display,
+            self.mutation_prob_label,
+            self.max_iter_label,
+            self.max_iter_slider,
+            self.max_iter_display,
+            self.include_parents_checkbox
+        ]
 
 
     def display_file_dialog(self):
@@ -149,10 +198,7 @@ class MainWindow(QMainWindow):
         dialog.setNameFilter("Text files (*.txt)")
 
         if dialog.exec_():
-            filenames = dialog.selectedFiles()
-            if len(filenames) != 1:
-                pass #TODO: not one file exception
-    
+            filenames = dialog.selectedFiles()    
             self.app.set_cities_from_txt(filenames[0]) 
     
     def display_cities_count_dialog(self):
@@ -171,7 +217,11 @@ class MainWindow(QMainWindow):
         self.parents_ratio_display.setText(f"{config.parents_ratio} %") 
         self.parents_ratio_slider.setValue(flt2per(config.parents_ratio))
         self.population_size_input.setText(str(config.population_size))
+        self.max_iter_slider.setValue(config.max_iter)
         self.start_stop_button.clicked.connect(self.app.start_stop_clicked)
+        self.progressbar.setMinimum(0)
+        self.progressbar.setMaximum(config.max_iter-1)
+        self.progressbar.show()
 
     def draw_cities(self, cities):
         painter = QPainter(self.canvas.pixmap())
@@ -215,6 +265,28 @@ class MainWindow(QMainWindow):
         self.generation_num.setText(f"Pokolenie: {curr_stats['generation_num']}")
         self.top_score.setText(f"Najlepszy wynik: {curr_stats['best_score']}")
         self.avg_score.setText(f"Średni wynik: {curr_stats['avg_score']}")
+        self.progressbar.setValue(curr_stats["iters_without_change"])
+        self.style_progressbar()
+        
+    
+    def style_progressbar(self):
+        progress_percent = ((self.progressbar.value() - self.progressbar.minimum()) / 
+            (self.progressbar.maximum() - self.progressbar.minimum()))
+        red = 255 * progress_percent
+        green = 255 - red
+        blue = 0
+
+        self.progressbar.setStyleSheet("""
+        QProgressBar{
+            border: 2px solid grey;
+            background-color: black;
+            border-radius: 30%;
+        }
+        QProgressBar::chunk {"""
+            f"background-color: rgb({red},{green},{blue});"
+            "border-radius: 30%;"
+        "}"
+        )
     
     def draw_paths(self, curr_stats):
         painter = QPainter(self.canvas.pixmap())
@@ -267,6 +339,7 @@ class MainWindow(QMainWindow):
         self.pixmap = QPixmap(*CANVAS_SIZE)
         self.pixmap.fill(QColor("white"))
         self.canvas.setPixmap(self.pixmap)
+        self.progressbar.setMaximum(self.app.config.max_iter-1)
 
     def closeEvent(self, event):
         box = QMessageBox()
@@ -289,6 +362,13 @@ class MainWindow(QMainWindow):
         elif box.clickedButton() == btn_no:
             event.ignore()
 
+    def deactivate_interactive_widgets(self):
+        for widget in self.settings_widgets:
+            widget.setEnabled(False)
+    
+    def activate_interactive_widgets(self):
+        for widget in self.settings_widgets:
+            widget.setEnabled(True)
 
 
 if __name__ == "__main__":

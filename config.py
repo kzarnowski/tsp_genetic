@@ -5,7 +5,7 @@ class Config():
                 mutation_prob = 0.1, 
                 parents_ratio = 0.5, 
                 include_parents = False,
-                max_iter = 100
+                max_iter = 130
     ):
         self.population_size = population_size
         self.mutation_prob = mutation_prob

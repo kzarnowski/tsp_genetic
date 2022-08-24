@@ -36,6 +36,7 @@ class GeneticAlgorithm():
             self.stats['generation_num'] += 1
             self.stats['avg_score'] = np.mean(scores)
             self.stats['solution'] = population[self.best_idx]
+            self.stats['iters_without_change'] = self.iters_without_change
 
             progress_callback.emit(self.stats)
 

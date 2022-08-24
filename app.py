@@ -38,6 +38,7 @@ class App():
         params["mutation_prob"] = per2flt(self.ui.mutation_prob_slider.value())
         params["parents_ratio"] = per2flt(self.ui.parents_ratio_slider.value())
         params["include_parents"] = self.ui.include_parents_checkbox.isChecked()
+        params["max_iter"] = self.ui.max_iter_slider.value()
         self.config.update(params)
 
     def start_stop_clicked(self):
@@ -55,10 +56,10 @@ class App():
             self.worker.signals.progress.connect(self.progress)
             self.ga.is_stopped = False
             self.ui.start_stop_button.setText("STOP")
+            self.ui.deactivate_interactive_widgets()
             self.threadpool.start(self.worker)
         else:
-            self.ga.is_stopped = True
-            self.ui.start_stop_button.setText("START")
+            self.complete()
     
     def progress(self, stats):
         self.ui.update_stats(stats)
@@ -72,4 +73,5 @@ class App():
         print("THREAD COMPLETE!")
         self.ga.is_stopped = True
         self.ui.start_stop_button.setText("START")
+        self.ui.activate_interactive_widgets()
         
