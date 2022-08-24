@@ -22,15 +22,12 @@ class App():
         self.ga.set_cities(cities)
         self.ui.reset_canvas()
         self.ui.draw_cities(cities)
-        print(num_of_cities)
 
     def set_cities_from_txt(self, path):
         cities = np.loadtxt(path)
-        #TODO: check file structure
         self.ga.set_cities(cities)
         self.ui.reset_canvas()
         self.ui.draw_cities(cities)
-        print(f"Cities set from: {path}")
 
     def run_ga(self):
         self.ga.run_algorithm()
@@ -73,4 +70,6 @@ class App():
 
     def complete(self):
         print("THREAD COMPLETE!")
+        self.ga.is_stopped = True
+        self.ui.start_stop_button.setText("START")
         

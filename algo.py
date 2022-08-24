@@ -1,10 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import distance_matrix
-
-import configuration as config
 from utils import random_pair
-from time import perf_counter
 
 class GeneticAlgorithm():
     def __init__(self, config):
@@ -23,6 +20,8 @@ class GeneticAlgorithm():
         self.cities = cities
 
     def run_algorithm(self, progress_callback):
+        print(self.config)
+
         N = self.cities.shape[0]
         dist = distance_matrix(self.cities, self.cities)
 
@@ -34,34 +33,36 @@ class GeneticAlgorithm():
         self.stats['best_score'] = scores[self.best_idx]
         self.stats['generation_num'] = 0
         while not self._stop_condition(scores):
+            self.stats['generation_num'] += 1
+            self.stats['avg_score'] = np.mean(scores)
+            self.stats['solution'] = population[self.best_idx]
+
+            progress_callback.emit(self.stats)
+
             parents = self._select_parents(population, scores)
             pairs = self._generate_pairs(parents)
             offspring = self._procreate(parents, pairs)
-
             offspring = self._mutate(offspring)
 
             population = self._next_generation(parents, offspring)
             scores = self._eval_population(population, dist)
 
-            self.stats['generation_num'] += 1
-            self.stats['avg_score'] = np.mean(scores)
-            self.stats['solution'] = population[self.best_idx]
-            progress_callback.emit(self.stats)
+            
         
         return self.stats
     
     def _init_population(self, N):
         rng = np.random.default_rng()
         x = np.arange(N, dtype=np.uint16)
-        perms = rng.permuted(np.tile(x, config.POPULATION_SIZE).reshape(config.POPULATION_SIZE, x.size), axis=1)
+        perms = rng.permuted(np.tile(x, self.config.population_size).reshape(self.config.population_size, x.size), axis=1)
         return perms
 
 
     def _eval_population(self, pop, dist):
-        scores = np.empty(config.POPULATION_SIZE)
+        scores = np.empty(self.config.population_size)
         rows = pop[:, :-1]
         cols = pop[:, 1:]
-        for i in range(config.POPULATION_SIZE):
+        for i in range(self.config.population_size):
             scores[i] = np.sum(dist[rows[i], cols[i]]) + dist[rows[i, 1], cols[i, -1]]
         return scores
 
@@ -77,7 +78,7 @@ class GeneticAlgorithm():
         """
         Roulette-wheel method with inversed probability.
         """
-        num_of_parents = int(config.PARENTS_RATIO * pop.shape[0])
+        num_of_parents = int(self.config.parents_ratio * pop.shape[0])
         probabilities = self._calculate_prob(scores)
 
         indices = np.random.choice(
@@ -91,10 +92,10 @@ class GeneticAlgorithm():
         return parents
 
     def _generate_pairs(self, parents):
-        if config.INCLUDE_PARENTS:
-            offspring_size = config.POPULATION_SIZE - parents.shape[0]
+        if self.config.include_parents:
+            offspring_size = self.config.population_size - parents.shape[0]
         else:
-            offspring_size = config.POPULATION_SIZE
+            offspring_size = self.config.population_size
 
         pairs = np.ndarray(shape=(offspring_size//2, 2), dtype=np.uint16)
 
@@ -148,8 +149,9 @@ class GeneticAlgorithm():
         def mutate_offsprings(offsprings):
             return np.apply_along_axis(mutate_individual, 1, offsprings)
 
-        is_mutated = np.array(np.random.rand(pop.shape[0]) <= config.MUTATION_PROBABILITY)
-        pop[is_mutated] = mutate_offsprings(pop[is_mutated])
+        is_mutated = np.array(np.random.rand(pop.shape[0]) <= self.config.mutation_prob)
+        if np.any(is_mutated):
+            pop[is_mutated] = mutate_offsprings(pop[is_mutated])
         return pop
 
 
@@ -171,7 +173,7 @@ class GeneticAlgorithm():
 
 
     def _next_generation(self, parents, offspring):
-        if config.INCLUDE_PARENTS:
+        if self.config.include_parents:
             return np.vstack((parents, offspring))
         else:
             return offspring
@@ -180,14 +182,13 @@ class GeneticAlgorithm():
         if self.is_stopped:
             return True
 
-        curr_best_idx = np.argmin(scores)
-        curr_best_score = scores[curr_best_idx]
+        self.best_idx = np.argmin(scores)
+        curr_best_score = scores[self.best_idx]
 
         if curr_best_score < self.stats['best_score']:
             self.stats['best_score'] = curr_best_score
-            self.best_idx = curr_best_idx
             self.iters_without_change = 0
             return False
         else:
             self.iters_without_change += 1
-            return self.iters_without_change == config.MAX_ITER
+            return self.iters_without_change == self.config.max_iter

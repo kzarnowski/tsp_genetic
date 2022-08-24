@@ -1,5 +1,4 @@
-import algo
-from gui2 import MainWindow
+from gui import MainWindow
 import sys
 from PyQt5.QtWidgets import QApplication
 from app import App

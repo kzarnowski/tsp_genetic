@@ -4,13 +4,14 @@ class Config():
                 population_size = 1000, 
                 mutation_prob = 0.1, 
                 parents_ratio = 0.5, 
-                include_parents = False
+                include_parents = False,
+                max_iter = 100
     ):
         self.population_size = population_size
         self.mutation_prob = mutation_prob
         self.parents_ratio = parents_ratio
         self.include_parents = include_parents
-        self.filepath = None
+        self.max_iter = max_iter
 
     def update(self, params):
         for param_name, param_value in params.items():
