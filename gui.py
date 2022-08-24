@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (QFileDialog, QInputDialog, QWidget, QMainWindow, QH
     QVBoxLayout, QApplication, QLabel, QPushButton, QLineEdit, QSlider, QCheckBox, QMessageBox,
     QProgressBar)
 from PyQt5.QtCore import QSize, Qt, QPointF, QThreadPool
-from PyQt5.QtGui import QPalette, QColor, QPainter, QPixmap, QPen
+from PyQt5.QtGui import QPalette, QColor, QPainter, QPixmap, QPen, QFont, QIntValidator
 
 from utils import flt2per
 import numpy as np
@@ -23,8 +23,12 @@ class MainWindow(QMainWindow):
         self.best_score = None
         self.solution = None
 
+        self.threadpool = QThreadPool()
+        with open('help.txt', 'r') as file:
+            self.help_message = file.read()
+
         self.setFixedSize(QSize(*WINDOW_SIZE))
-        self.setWindowTitle("Travelling Salesman Problem - Genetic Algorithm")
+        self.setWindowTitle("Problem komiwojazera - algorytm genetyczny")
 
         self.container = QWidget()
         self.layout = QHBoxLayout()
@@ -40,16 +44,23 @@ class MainWindow(QMainWindow):
         self.sidebar = QVBoxLayout()
         self.layout.addLayout(self.sidebar, 4)
 
-
         self.settings = QVBoxLayout()
-        self.sidebar.addLayout(self.settings, 3)
+        self.help = QPushButton("Kliknij aby uzyskać pomoc")
+        self.help.clicked.connect(self.display_help)
+        self.sidebar.addWidget(self.help)
+        self.sidebar.addLayout(self.settings, 7)
 
         self.stats = QVBoxLayout()
-        self.sidebar.addLayout(self.stats, 7)
+        self.sidebar.addLayout(self.stats, 3)
 
-
+        header_font = QFont()
+        header_font.setPointSize(18)
+        
         # LOADING DATA
-        self.data_label = QLabel("Dane")
+        self.data_label = QLabel("DANE")
+        self.data_label.setFont(header_font)
+        self.data_label.setAlignment(Qt.AlignCenter)
+        self.data_label.setContentsMargins(0, 0, 0, 5)
         self.load_data_button = QPushButton()
         self.load_data_button.setText("Wczytaj z pliku txt")
         self.load_data_button.clicked.connect(self.display_file_dialog)
@@ -62,9 +73,13 @@ class MainWindow(QMainWindow):
         self.settings.addWidget(self.generate_random_button)
 
         # CONFIGURATION PANEL
-        self.configuration_label = QLabel("Opcje")
-        self.population_size_label = QLabel("Liczba osobników w populacji")
+        self.configuration_label = QLabel("OPCJE")
+        self.configuration_label.setFont(header_font)
+        self.configuration_label.setAlignment(Qt.AlignCenter)
+        self.configuration_label.setContentsMargins(0, 10, 0, 5)
+        self.population_size_label = QLabel("Rozmiar populacji")
         self.population_size_input = QLineEdit()
+        self.population_size_input.setValidator(QIntValidator())
         
         self.settings.addWidget(self.configuration_label)
         self.settings.addWidget(self.population_size_label)
@@ -73,7 +88,7 @@ class MainWindow(QMainWindow):
         """
         Setup parents ratio layout.
         """
-        self.parents_ratio_label = QLabel("Ile rodziców do rozmnażania:")
+        self.parents_ratio_label = QLabel("Wybór rodziców:")
         self.parents_ratio_layout = QHBoxLayout()
         self.parents_ratio_layout.setAlignment(Qt.AlignJustify | Qt.AlignVCenter)
 
@@ -98,7 +113,7 @@ class MainWindow(QMainWindow):
         """
         Setup mutation probability layout.
         """
-        self.mutation_prob_label = QLabel("Prawdopodobieństwo mutacji")
+        self.mutation_prob_label = QLabel("Prawdopodobieństwo mutacji:")
         self.mutation_prob_layout = QHBoxLayout()
         self.mutation_prob_layout.setAlignment(Qt.AlignJustify | Qt.AlignVCenter)
 
@@ -121,20 +136,20 @@ class MainWindow(QMainWindow):
         self.mutation_prob_layout.addWidget(self.mutation_prob_display, 1)
 
         # MAX ITERS WITHOUT CHANGE
-        self.max_iter_label = QLabel("Dociekliwość")
+        self.max_iter_label = QLabel("Dociekliwość:")
         self.max_iter_layout = QHBoxLayout()
         self.max_iter_layout.setAlignment(Qt.AlignJustify | Qt.AlignVCenter)
         self.max_iter_slider = QSlider()
         self.max_iter_slider.setMinimum(30)
-        self.max_iter_slider.setMaximum(300)
+        self.max_iter_slider.setMaximum(500)
         self.max_iter_slider.setOrientation(Qt.Horizontal)
         self.max_iter_display = QLabel()
         self.max_iter_slider.valueChanged.connect(lambda: {
             self.max_iter_display.setText(
-                "Bardzo niska" if self.max_iter_slider.value() < 60 else
-                "Niska" if self.max_iter_slider.value() < 120 else
-                "Średnia" if self.max_iter_slider.value() < 180 else
-                "Wysoka" if self.max_iter_slider.value() < 240 else
+                "Bardzo niska" if self.max_iter_slider.value() < 100 else
+                "Niska" if self.max_iter_slider.value() < 200 else
+                "Średnia" if self.max_iter_slider.value() < 300 else
+                "Wysoka" if self.max_iter_slider.value() < 400 else
                 "Bardzo wysoka"
             )
         })
@@ -144,30 +159,36 @@ class MainWindow(QMainWindow):
         self.max_iter_layout.addWidget(self.max_iter_slider, 2)
         self.max_iter_layout.addWidget(self.max_iter_display, 1)
 
-
         # INCLUDE PARENTS
         self.include_parents_checkbox = QCheckBox()
         self.include_parents_checkbox.setChecked(True)
-        self.include_parents_checkbox.setText("Rodzice w następnym pokoleniu")
+        self.include_parents_checkbox.setText("Przekazuj rodziców")
         self.settings.addWidget(self.include_parents_checkbox)
 
         # START/STOP BUTTON
         self.start_stop_button = QPushButton()
+        # self.start_stop_button.setFixedHeight(40)
         self.start_stop_button.setText("START")
         self.settings.addWidget(self.start_stop_button)
 
         # STATS
-        self.stats_label = QLabel("Statystyki (kliknij start aby zobaczyć)")
+        self.stats_label = QLabel("STATYSTYKI")
+        self.stats_label.setFont(header_font)
+        self.stats_label.setAlignment(Qt.AlignCenter)
         self.stats.addWidget(self.stats_label)
-        self.generation_num = QLabel()
+        self.generation_num = QLabel("Pokolenie:")
         self.stats.addWidget(self.generation_num)
-        self.top_score = QLabel()
+        self.top_score = QLabel("Najlepszy wynik:")
         self.stats.addWidget(self.top_score)
-        self.avg_score = QLabel()
+        self.avg_score = QLabel("Średni wynik:")
         self.stats.addWidget(self.avg_score)
 
+        # PROGRESS BAR
+        self.progressbar_label = QLabel("Pozostały czas:")
+        self.stats.addWidget(self.progressbar_label)
         self.progressbar = QProgressBar()
         self.progressbar.setTextVisible(False)
+        self.progressbar.setInvertedAppearance(True)
         self.style_progressbar()
         self.stats.addWidget(self.progressbar)
 
@@ -191,6 +212,21 @@ class MainWindow(QMainWindow):
             self.include_parents_checkbox
         ]
 
+        self.stats_widgets = [
+            self.stats_label,
+            self.generation_num,
+            self.top_score,
+            self.avg_score,
+            self.progressbar,
+            self.progressbar_label
+        ]
+
+    def display_help(self):
+        box = QMessageBox()
+        box.setIcon(QMessageBox.Information)
+        box.setBaseSize(700, 700)
+        box.setInformativeText(self.help_message)
+        box.exec()
 
     def display_file_dialog(self):
         dialog = QFileDialog()
@@ -199,7 +235,13 @@ class MainWindow(QMainWindow):
 
         if dialog.exec_():
             filenames = dialog.selectedFiles()    
-            self.app.set_cities_from_txt(filenames[0]) 
+            self.app.set_cities_from_txt(filenames[0])
+
+    def display_warning(self, message):
+        box = QMessageBox()
+        box.setIcon(QMessageBox.Warning)
+        box.setText(message)
+        box.exec()
     
     def display_cities_count_dialog(self):
         num_of_cities, ok = QInputDialog.getInt(
@@ -207,6 +249,10 @@ class MainWindow(QMainWindow):
             "Random mode: number of cities",
             "Enter a number of cities"
         )
+        
+        if num_of_cities < 3:
+            self.display_warning("Minimalna liczba miast: 3")
+            return
 
         if ok:
             self.app.set_cities_random(num_of_cities)
@@ -221,7 +267,7 @@ class MainWindow(QMainWindow):
         self.start_stop_button.clicked.connect(self.app.start_stop_clicked)
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(config.max_iter-1)
-        self.progressbar.show()
+        self.after()
 
     def draw_cities(self, cities):
         painter = QPainter(self.canvas.pixmap())
@@ -253,39 +299,35 @@ class MainWindow(QMainWindow):
                 painter.drawPoint(self.px[i], self.py[i])
         painter.end()
         self.update()
-    
-    def display_no_cities_message(self):
-        box = QMessageBox()
-        box.setIcon(QMessageBox.Warning)
-        box.setText("Załaduj dane przed uruchomieniem algorytmu.")
-        box.exec()
 
     def update_stats(self, curr_stats):
-        self.stats_label.setText("Statystyki")
         self.generation_num.setText(f"Pokolenie: {curr_stats['generation_num']}")
-        self.top_score.setText(f"Najlepszy wynik: {curr_stats['best_score']}")
-        self.avg_score.setText(f"Średni wynik: {curr_stats['avg_score']}")
+        self.top_score.setText(f"Najlepszy wynik: {round(curr_stats['best_score'], 3)}")
+        self.avg_score.setText(f"Średni wynik: {round(curr_stats['avg_score'], 3)}")
         self.progressbar.setValue(curr_stats["iters_without_change"])
         self.style_progressbar()
         
     
     def style_progressbar(self):
-        progress_percent = ((self.progressbar.value() - self.progressbar.minimum()) / 
-            (self.progressbar.maximum() - self.progressbar.minimum()))
-        red = 255 * progress_percent
-        green = 255 - red
-        blue = 0
+        if self.progressbar.value() == -1:
+            red, green, blue = 0, 0, 0
+        else:
+            progress_percent = ((self.progressbar.value() - self.progressbar.minimum()) / 
+                (self.progressbar.maximum() - self.progressbar.minimum()))
+            red = 255 * progress_percent
+            green = 255 - red
+            blue = 0
 
         self.progressbar.setStyleSheet("""
         QProgressBar{
-            border: 2px solid grey;
-            background-color: black;
-            border-radius: 30%;
-        }
-        QProgressBar::chunk {"""
+            border: 2px solid grey;"""
             f"background-color: rgb({red},{green},{blue});"
             "border-radius: 30%;"
-        "}"
+        """}
+        QProgressBar::chunk {
+            background-color: black;
+            border-radius: 30%;
+        }"""
         )
     
     def draw_paths(self, curr_stats):
@@ -361,15 +403,21 @@ class MainWindow(QMainWindow):
             event.accept()
         elif box.clickedButton() == btn_no:
             event.ignore()
-
-    def deactivate_interactive_widgets(self):
+    
+    def before(self):
         for widget in self.settings_widgets:
             widget.setEnabled(False)
-    
-    def activate_interactive_widgets(self):
+        for widget in self.stats_widgets:
+            widget.setEnabled(True)
+        self.start_stop_button.setText("STOP")
+
+    def after(self):
         for widget in self.settings_widgets:
             widget.setEnabled(True)
-
+        for widget in self.stats_widgets:
+            widget.setEnabled(False)
+        self.start_stop_button.setText("START")
+        self.progressbar.setValue(self.progressbar.maximum())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

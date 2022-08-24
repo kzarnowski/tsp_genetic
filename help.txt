@@ -1,0 +1,29 @@
+Witaj w programie do rozwiązywania problemu komiwojazera z wykorzystaniem
+algorytmów genetycznych. Przed rozpoczęciem, zapoznaj się z objaśnieniami.
+
+1. Dane
+    - Wczytaj z pliku txt: plik powinien zawierać dwie kolumny oddzielone spacją, kazdy wiersz zawiera współrzędną x i y danego miasta.
+    - Losuj: program wylosuje współrzędne dla zadanej liczby miast
+
+2. Opcje
+    - Rozmiar populacji: ile osobników będzie liczyło kazde pokolenie, rozmiar populacji jest stały przez cały czas działania algorytmu
+    - Wybór rodziców: jaka część populacji zostanie wybrana jako rodzice, którzy w operacji krzyzowania utworzą osobników potomnych do następnego pokolenia
+    - Prawdopodobieństwo mutacji: określa prawdopodobieństwo z jakim nowo utworzony potomek moze ulec mutacji
+    - Dociekliwość: określa skłonność algorytmu do dalszego poszukiwania, w sytuacji gdy przez pewien czas nie poprawia się dotąd znalezione najlepsze rozwiązanie.
+    Im większa dociekiwość, tym algorytm niechętniej się "poddaje".
+    - Przekazuj rodziców: określa, czy do następnego pokolenia zostaną przekazani równiez rodzice z aktualnej generacji.
+    Jeśli odznaczone, następne pokolenie zostanie utworzone w 100% z nowych osobników potomnych.
+
+3. Start / Stop: Słuzy do uruchamiania i zatrzymywania algorytmu.
+
+4. Statystyki
+    - Pokolenie: numer iteracji
+    - Najlepszy wynik: długość najkrótszej znalezionej do tej pory ściezki
+    - Średni wynik: uśredniona długość ściezki dla całej populacji
+    - Pozostały czas: wizualizacja dociekliwości, gdy algorytm utknął na pewnym rozwiązaniu i w kolejnych iteracjach nie moze znalezc lepszego, dociekliwość wyczerpuje się.
+    Kiedy spadnie do zera, algorytm zatrzymuje się. W momencie znalezienia lepszego rozwiązania, pasek regeneruje się.
+
+5. Mapa
+    - Po załadowaniu danych na kwadratowej mapie wyświetlą się miasta. W przypadku gdy teren na którym znajdują się miasta wczytane z pliku nie jest w formie kwadratu, 
+    współrzędne są skalowane, ale wyłącznie do celów wyświetlania. Wszelkie obliczenia i szukanie rozwiązania odbywają się na oryginalnych współrzędnych.
+    - W trakcie działania algorytmu, mapa na bieząco pokazuje najkrótszą znalezioną dotąd ściezkę.

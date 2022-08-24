@@ -4,8 +4,6 @@ from config import Config
 from utils import per2flt
 from workers import Worker
 
-from PyQt5.QtCore import QThreadPool
-
 class App():
     def __init__(self, ui):
         self.ui = ui
@@ -13,8 +11,7 @@ class App():
         self.ui.app = self
         self.ui.setup_default_config(self.config)
         self.ga = GeneticAlgorithm(self.config)
-        self.threadpool = QThreadPool()
-
+        
     def set_cities_random(self, num_of_cities):
         x = np.random.uniform(0, 100, num_of_cities)
         y = np.random.uniform(0, 100, num_of_cities)
@@ -24,7 +21,17 @@ class App():
         self.ui.draw_cities(cities)
 
     def set_cities_from_txt(self, path):
-        cities = np.loadtxt(path)
+        try:
+            cities = np.loadtxt(path)
+        except:
+            self.ui.display_warning("Wystąpił błąd. Plik ma nieprawidłową" 
+                " strukturę lub jest uszkodzony.")
+            return
+
+        if cities.shape[1] != 2:
+            self.ui.display_warning("Wybrany plik ma nieprawidłową strukturę.")
+            return
+
         self.ga.set_cities(cities)
         self.ui.reset_canvas()
         self.ui.draw_cities(cities)
@@ -43,7 +50,11 @@ class App():
 
     def start_stop_clicked(self):
         if self.ui.px is None or self.ui.py is None:
-            self.ui.display_no_cities_message()
+            self.ui.display_warning("Załaduj dane przed uruchomieniem algorytmu.")
+            return
+        
+        if int(self.ui.population_size_input.text()) < 15:
+            self.ui.display_warning("Minimalna liczba osobników: 15")
             return
 
         if self.ga.is_stopped:
@@ -55,9 +66,8 @@ class App():
             self.worker.signals.finished.connect(self.complete)
             self.worker.signals.progress.connect(self.progress)
             self.ga.is_stopped = False
-            self.ui.start_stop_button.setText("STOP")
-            self.ui.deactivate_interactive_widgets()
-            self.threadpool.start(self.worker)
+            self.ui.before()
+            self.ui.threadpool.start(self.worker)
         else:
             self.complete()
     
@@ -70,8 +80,6 @@ class App():
         self.ui.draw_paths(stats)
 
     def complete(self):
-        print("THREAD COMPLETE!")
         self.ga.is_stopped = True
-        self.ui.start_stop_button.setText("START")
-        self.ui.activate_interactive_widgets()
+        self.ui.after()
         
