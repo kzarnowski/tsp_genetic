@@ -47,6 +47,8 @@ class GeneticAlgorithm():
             self.stats['avg_score'] = np.mean(scores)
             self.stats['solution'] = population[self.best_idx]
             progress_callback.emit(self.stats)
+        
+        return self.stats
     
     def _init_population(self, N):
         rng = np.random.default_rng()
@@ -60,7 +62,7 @@ class GeneticAlgorithm():
         rows = pop[:, :-1]
         cols = pop[:, 1:]
         for i in range(config.POPULATION_SIZE):
-            scores[i] = np.sum(dist[rows[i], cols[i]])
+            scores[i] = np.sum(dist[rows[i], cols[i]]) + dist[rows[i, 1], cols[i, -1]]
         return scores
 
 

@@ -1,3 +1,4 @@
+from re import S
 from PyQt5.QtWidgets import (QFileDialog, QInputDialog, QWidget, QMainWindow, QHBoxLayout, 
     QVBoxLayout, QApplication, QLabel, QPushButton, QLineEdit, QSlider, QCheckBox, QMessageBox)
 from PyQt5.QtCore import QSize, Qt, QPointF, QThreadPool
@@ -18,6 +19,8 @@ class MainWindow(QMainWindow):
         self.app = None
         self.px = None
         self.py = None
+        self.best_score = None
+        self.solution = None
 
         self.setFixedSize(QSize(*WINDOW_SIZE))
         self.setWindowTitle("Travelling Salesman Problem - Genetic Algorithm")
@@ -134,8 +137,8 @@ class MainWindow(QMainWindow):
         self.stats.addWidget(self.generation_num)
         # self.execution_time = QLabel()
         # self.stats.addWidget(self.execution_time)
-        self.best_score = QLabel()
-        self.stats.addWidget(self.best_score)
+        self.top_score = QLabel()
+        self.stats.addWidget(self.top_score)
         self.avg_score = QLabel()
         self.stats.addWidget(self.avg_score)
 
@@ -199,6 +202,7 @@ class MainWindow(QMainWindow):
         for i in range(self.px.size):
                 painter.drawPoint(self.px[i], self.py[i])
         painter.end()
+        self.update()
     
     def display_no_cities_message(self):
         box = QMessageBox()
@@ -206,11 +210,65 @@ class MainWindow(QMainWindow):
         box.setText("Załaduj dane przed uruchomieniem algorytmu.")
         box.exec()
 
-    def update_stats(self, stats):
+    def update_stats(self, curr_stats):
         self.stats_label.setText("Statystyki")
-        self.generation_num.setText(f"Pokolenie: {stats['generation_num']}")
-        self.best_score.setText(f"Najlepszy wynik: {stats['best_score']}")
-        self.avg_score.setText(f"Średni wynik: {stats['avg_score']}")
+        self.generation_num.setText(f"Pokolenie: {curr_stats['generation_num']}")
+        self.top_score.setText(f"Najlepszy wynik: {curr_stats['best_score']}")
+        self.avg_score.setText(f"Średni wynik: {curr_stats['avg_score']}")
+    
+    def draw_paths(self, curr_stats):
+        painter = QPainter(self.canvas.pixmap())
+        pen = QPen()
+        pen.setWidth(1)
+
+        if self.best_score is None or self.best_score > curr_stats['best_score']:
+            print(" I SHOULD DRAW")
+            self.best_score = curr_stats['best_score']
+            cities_count = len(self.px)
+
+            # CLEAR OLD PATH
+            if self.solution is not None:
+                pen.setColor(QColor("white"))
+                painter.setPen(pen)
+                
+                for i in range(cities_count):
+                    j = i + 1 if i != cities_count - 1 else 0
+
+                    p1 = self.solution[i]
+                    p2 = self.solution[j]
+
+                    painter.drawLine(
+                        self.px[p1], self.py[p1],
+                        self.px[p2], self.py[p2]
+                    )
+
+            self.solution = curr_stats['solution']
+
+            # DRAW NEW PATH
+            pen.setColor(QColor("blue"))
+            painter.setPen(pen)
+
+            for i in range(cities_count):
+                j = i + 1 if i != cities_count - 1 else 0
+
+                p1 = self.solution[i]
+                p2 = self.solution[j]
+
+                painter.drawLine(
+                    self.px[p1], self.py[p1],
+                    self.px[p2], self.py[p2]
+                )
+        
+        painter.end()
+        self.update()
+
+    def reset_canvas(self):
+        self.best_score = None
+        self.solution = None
+        self.pixmap = QPixmap(*CANVAS_SIZE)
+        self.pixmap.fill(QColor("white"))
+        self.canvas.setPixmap(self.pixmap)
+
 
 
 if __name__ == "__main__":

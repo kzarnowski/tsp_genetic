@@ -20,6 +20,7 @@ class App():
         y = np.random.uniform(0, 100, num_of_cities)
         cities = np.column_stack((x, y))
         self.ga.set_cities(cities)
+        self.ui.reset_canvas()
         self.ui.draw_cities(cities)
         print(num_of_cities)
 
@@ -27,6 +28,7 @@ class App():
         cities = np.loadtxt(path)
         #TODO: check file structure
         self.ga.set_cities(cities)
+        self.ui.reset_canvas()
         self.ui.draw_cities(cities)
         print(f"Cities set from: {path}")
 
@@ -48,6 +50,8 @@ class App():
 
         if self.ga.is_stopped:
             self.update_config()
+            self.ui.reset_canvas()
+            self.ui.draw_cities(self.ga.cities)
             self.worker = Worker(self.ga.run_algorithm)
             self.worker.signals.result.connect(self.result)
             self.worker.signals.finished.connect(self.complete)
@@ -61,9 +65,11 @@ class App():
     
     def progress(self, stats):
         self.ui.update_stats(stats)
-    
-    def result(self, s):
-        print(s)
+        self.ui.draw_paths(stats)
+        self.ui.draw_cities(self.ga.cities)
+
+    def result(self, stats):
+        self.ui.draw_paths(stats)
 
     def complete(self):
         print("THREAD COMPLETE!")
