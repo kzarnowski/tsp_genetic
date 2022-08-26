@@ -10,7 +10,7 @@ algorytmów genetycznych. Przed rozpoczęciem, zapoznaj się z objaśnieniami.
     - Wybór rodziców: jaka część populacji zostanie wybrana jako rodzice, którzy w operacji krzyzowania utworzą osobników potomnych do następnego pokolenia
     - Prawdopodobieństwo mutacji: określa prawdopodobieństwo z jakim nowo utworzony potomek moze ulec mutacji
     - Dociekliwość: określa skłonność algorytmu do dalszego poszukiwania, w sytuacji gdy przez pewien czas nie poprawia się dotąd znalezione najlepsze rozwiązanie.
-    Im większa dociekiwość, tym algorytm niechętniej się "poddaje".
+    Im większa dociekliwość, tym algorytm niechętniej się "poddaje".
     - Przekazuj rodziców: określa, czy do następnego pokolenia zostaną przekazani równiez rodzice z aktualnej generacji.
     Jeśli odznaczone, następne pokolenie zostanie utworzone w 100% z nowych osobników potomnych.
 

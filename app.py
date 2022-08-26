@@ -36,9 +36,6 @@ class App():
         self.ui.reset_canvas()
         self.ui.draw_cities(cities)
 
-    def run_ga(self):
-        self.ga.run_algorithm()
-
     def update_config(self):
         params = {}
         params["population_size"] = int(self.ui.population_size_input.text())
@@ -58,28 +55,34 @@ class App():
             return
 
         if self.ga.is_stopped:
-            self.update_config()
-            self.ui.reset_canvas()
-            self.ui.draw_cities(self.ga.cities)
-            self.worker = Worker(self.ga.run_algorithm)
-            self.worker.signals.result.connect(self.result)
-            self.worker.signals.finished.connect(self.complete)
-            self.worker.signals.progress.connect(self.progress)
-            self.ga.is_stopped = False
-            self.ui.before()
-            self.ui.threadpool.start(self.worker)
+            self.run_ga()   
         else:
             self.complete()
     
     def progress(self, stats):
+        """ Przekazuje do ui aktualny wynik"""
         self.ui.update_stats(stats)
         self.ui.draw_paths(stats)
         self.ui.draw_cities(self.ga.cities)
 
     def result(self, stats):
+        """ Wynik algorytmu po zatrzymaniu """
         self.ui.draw_paths(stats)
 
     def complete(self):
+        """ Wywołuje się po zatrzymaniu algorytmu """
         self.ga.is_stopped = True
         self.ui.after()
-        
+    
+    def run_ga(self):
+        """ Uruchamia algorytm """
+        self.update_config()
+        self.ui.reset_canvas()
+        self.ui.draw_cities(self.ga.cities)
+        self.worker = Worker(self.ga.run_algorithm)
+        self.worker.signals.result.connect(self.result)
+        self.worker.signals.finished.connect(self.complete)
+        self.worker.signals.progress.connect(self.progress)
+        self.ga.is_stopped = False
+        self.ui.before()
+        self.ui.threadpool.start(self.worker)

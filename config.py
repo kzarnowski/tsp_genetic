@@ -1,4 +1,7 @@
 class Config():
+    """
+    Klasa przechowująca informację o aktualnie używanej konfiguracji.
+    """
     def __init__(
                 self, 
                 population_size = 1000, 
