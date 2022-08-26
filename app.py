@@ -50,8 +50,9 @@ class App():
             self.ui.display_warning("Załaduj dane przed uruchomieniem algorytmu.")
             return
         
-        if int(self.ui.population_size_input.text()) < 15:
-            self.ui.display_warning("Minimalna liczba osobników: 15")
+        if int(self.ui.population_size_input.text()) < 100:
+            self.ui.display_warning("W celu skutecznego działania algorytmu minimalna"
+            " liczba osobników wynosi 100")
             return
 
         if self.ga.is_stopped:

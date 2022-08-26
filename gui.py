@@ -100,8 +100,8 @@ class MainWindow(QMainWindow):
         self.parents_ratio_layout.setAlignment(Qt.AlignJustify | Qt.AlignVCenter)
 
         self.parents_ratio_slider = QSlider()
-        self.parents_ratio_slider.setMinimum(0)
-        self.parents_ratio_slider.setMaximum(100)
+        self.parents_ratio_slider.setMinimum(10)
+        self.parents_ratio_slider.setMaximum(90)
         self.parents_ratio_slider.setOrientation(Qt.Horizontal)
         self.parents_ratio_slider.setFixedWidth(200)
 
